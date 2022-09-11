@@ -5,6 +5,7 @@ import dotenv from "dotenv"
 import { MongoClient } from "mongodb";
 import bcrypt from "bcrypt";
 import {v4 as uuid} from "uuid";
+import dayjs from 'dayjs';
 
 
 dotenv.config();
@@ -19,6 +20,11 @@ const participantsSchema = joi.object({
     name: joi.string().required(),
     password: joi.required(),
     email: joi.string().email({ minDomainSegments: 2, tlds:{allow: ['com','net'] }}).required()
+})
+
+const valueSchema = joi.object({
+    value: joi.number().precision(2).required(),
+    description: joi.string().required(25)
 })
 
 const mongoClient = new MongoClient(process.env.MONGO_URI)
@@ -63,6 +69,14 @@ server.post('/sign-up', async (req,res)=>{
 server.post('/sign-in', async (req,res)=>{
     try {
         const loginUser = req.body;
+
+        const invalidName = participantsSchema.validate(user).error;
+
+        if(invalidName){
+        
+            return res.status(422).send('Formato inválido')
+        }
+
         const user = await db.collection('users').findOne({email: loginUser.email})
 
         const passwordValid = bcrypt.compareSync(loginUser.password, user.password);
@@ -99,7 +113,8 @@ server.get('/home', async(req,res)=>{
 
         const user = await db.collection('users').findOne({_id: session.userId});
         if(user){
-            const userMovements = await db.collection('movements').find().toArray();
+            const userMovements = await db.collection('movements').find({userId:session.userId}).toArray();
+    
             res.status(201).send(userMovements);
         } else{
             return res.sendStatus(401);
@@ -108,7 +123,99 @@ server.get('/home', async(req,res)=>{
     } catch (error) {
         console.error(error);
     }
+});
+
+server.post('/input', async(req, res)=>{
+    try {
+        let day = dayjs().locale('pt-br');
+        const user = req.body
+        const { authorization } = req.headers;
+        const token = authorization?.replace('Bearer ', '');
+
+        if(!token) {
+            return res.sendStatus(401)
+        };
+
+        const session = await db.collection('sessions').findOne({token: token });
+        if (!session) {
+            return res.sendStatus(401);
+        };
+
+        const RegisterUser = await db.collection('users').findOne({_id: session.userId});
+        if(RegisterUser){
+            const invalidValue = valueSchema.validate(user).error;
+
+            if(invalidValue){
+        
+                return res.status(422).send('Formato inválido')
+            }
+
+            const response = await db.collection('movements').insertOne({
+                value: user.value,
+                description: user.description,
+                userId: session.userId,
+                date: day.format('DD/MM'),
+                entry: 'positive'
+            });
+            console.log(response, "**********************")
+            return res.status(200).send(response)
+        }
+        
+        
+
+
+    } catch (error) {
+        console.error(error);
+    }
+    
+});
+
+
+server.post('/Output', async(req, res)=>{
+    try {
+        let day = dayjs().locale('pt-br');
+        const user = req.body
+        const { authorization } = req.headers;
+        const token = authorization?.replace('Bearer ', '');
+
+        if(!token) {
+            return res.sendStatus(401)
+        };
+
+        const session = await db.collection('sessions').findOne({token: token });
+        if (!session) {
+            return res.sendStatus(401);
+        };
+
+        const RegisterUser = await db.collection('users').findOne({_id: session.userId});
+        if(RegisterUser){
+            const invalidValue = valueSchema.validate(user).error;
+
+            if(invalidValue){
+        
+                return res.status(422).send('Formato inválido')
+            }
+
+            const response = await db.collection('movements').insertOne({
+                value: user.value,
+                description: user.description,
+                userId: session.userId,
+                date: day.format('DD/MM'),
+                entry: 'negative'
+            });
+            console.log(response, "**********************")
+            return res.status(200).send(response)
+        }
+        
+        
+
+
+    } catch (error) {
+        console.error(error);
+    }
+    
 })
+
 
 
 
