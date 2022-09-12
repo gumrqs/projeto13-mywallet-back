@@ -5,6 +5,7 @@ import db from "./db/db.js";
 export async function signUp(req,res){
     
     try {
+       /*  const token= uuid(); */
         const user = req.body;
         const registerUser = await db.collection('users').findOne({email:user.email});
 
@@ -17,8 +18,7 @@ export async function signUp(req,res){
                 email: user.email,
                 password: passwordHash
             });
-            console.log(passwordHash, '*************')
-            res.status(201).send('usuário registrado com sucesso!');
+            return res.status(201).send('usuário registrado com sucesso!');
 
     } catch (error) {
         return res.status(500).send(error.message);
@@ -31,7 +31,6 @@ export async function signIn(req,res){
         const loginUser = req.body;
 
         const user = await db.collection('users').findOne({email: loginUser.email})
-
         const passwordValid = bcrypt.compareSync(loginUser.password, user.password);
         console.log(user, '****************')
         if(user && passwordValid){
@@ -40,8 +39,8 @@ export async function signIn(req,res){
                 userId: user._id,
                 token: token
             });
-            console.log(response, '**************')
-            return res.status(201).send(token)
+           
+            return res.status(201).send({token: token, name: user.name});
         } else {
             return res.status(401).send('email ou senha inválidos')
         }

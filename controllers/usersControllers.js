@@ -8,7 +8,7 @@ export async function home(req,res){
             console.log(res, "meu pai socorro")
             const userMovements = await db.collection('movements').find({userId:user._id}).toArray();
     
-            res.status(201).send(userMovements);
+            return res.status(200).send(userMovements);
         } else{
             return res.sendStatus(401);
         }
@@ -44,7 +44,7 @@ export async function input(req,res){
 export async function output (req,res){
     try {
         let day = dayjs().locale('pt-br');
-
+       
         const user = res.locals.user;
         if(user){
             const movement = req.body
@@ -56,7 +56,7 @@ export async function output (req,res){
                 entry: 'negative'
             });
             
-            return res.status(200).send('Ok')
+            return res.status(200).send('ok')
         }
 
     } catch (error) {

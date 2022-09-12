@@ -9,9 +9,8 @@ const mongoClient = new MongoClient(process.env.MONGO_URI)
 
 try {
     await mongoClient.connect();
-    console.log('conectado o mongo');
-} catch (err) {
-    console.log('err.message')
+} catch(err){
+    console.error(err.message);
 }
 
    const db = mongoClient.db(process.env.DB_NAME);
