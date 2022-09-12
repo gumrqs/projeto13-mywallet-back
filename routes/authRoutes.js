@@ -8,3 +8,4 @@ authRouter.post('/sign-up',validaUsuario, signUp);
 authRouter.post('/sign-in',validaUsuarioLogin, signIn);
 
 export default authRouter;
+/* \\ */

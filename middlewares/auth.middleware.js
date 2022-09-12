@@ -1,5 +1,5 @@
 import joi from "joi";
-
+/* \\ */
 
 const participantsSchema = joi.object({ 
     name: joi.string().required(),
